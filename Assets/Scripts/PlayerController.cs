@@ -4,8 +4,11 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movimento")]
-    public float moveSpeed = 5f;
     public float rotationSpeed = 10f;
+
+    [Header("Velocidade")]
+    public float walkSpeed = 3f;
+    public float runSpeed = 6f;
 
     [Header("Referências")]
     public Camera cameraTransform;
@@ -65,12 +68,13 @@ public class PlayerController : MonoBehaviour
     {
         if (moveDirection.magnitude > 0.1f)
         {
-            // Rotaciona o player para a direção do movimento
             Quaternion targetRot = Quaternion.LookRotation(moveDirection);
             rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
         }
 
-        Vector3 velocity = moveDirection * moveSpeed;
+        bool isRunning = Input.GetKey(KeyCode.LeftShift);
+        float currentSpeed = isRunning ? runSpeed : walkSpeed;
+        Vector3 velocity = moveDirection * currentSpeed;
         velocity.y = rb.linearVelocity.y;
         rb.linearVelocity = velocity;
     }
@@ -84,22 +88,26 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-void HandleAttack()
-{
-    if (Input.GetMouseButtonDown(0))
+    void HandleAttack()
     {
-        Debug.Log("[Player] Ataque executado!");
-
-        // Raycast para frente do player para detectar inimigo
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position + Vector3.up, transform.forward, out hit, 2f))
+        if (Input.GetMouseButtonDown(0))
         {
-            EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-            if (enemy != null)
+            Debug.Log("[Player] Ataque executado!");
+            RaycastHit hit;
+            Debug.Log($"Origem: {transform.position + Vector3.up} | Direção: {transform.forward}");
+            if (Physics.SphereCast(transform.position + Vector3.up, 0.5f, transform.forward, out hit, 2f))
             {
-                enemy.TakeDamage(25f);
+                Debug.Log($"Raycast acertou: {hit.collider.gameObject.name}");
+                EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
+                if (enemy != null)
+                    enemy.TakeDamage(25f);
+                else
+                    Debug.Log("Objeto acertado não tem EnemyHealth");
+            }
+            else
+            {
+                Debug.Log("Raycast não acertou nada");
             }
         }
     }
-}
 }
