@@ -104,11 +104,11 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
-            animator.SetBool("IsRunnig", true);
+            animator.SetBool("IsRunning", true);
         } 
         else if(Input.GetKeyUp(KeyCode.LeftShift))
         {
-            animator.SetBool("IsRunnig", false);
+            animator.SetBool("IsRunning", false);
         }
     }
 
