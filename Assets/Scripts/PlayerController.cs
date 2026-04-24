@@ -10,11 +10,13 @@ public class PlayerController : MonoBehaviour
     [Header("Referências")]
     public Camera cameraTransform;
 
+    private Animator animator;
     private Rigidbody rb;
     private Vector3 moveDirection;
 
     void Awake()
     {
+        animator = GetComponentInChildren<Animator>();
         rb = GetComponent<Rigidbody>();
         
         if (cameraTransform == null)
@@ -24,6 +26,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         // HandleInput();
+        HandleRunning();
         HandleInteraction();
         HandleAttack();
     }
@@ -33,6 +36,18 @@ public class PlayerController : MonoBehaviour
     {
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
+
+        
+        animator.SetFloat("Horizontal", h);
+        animator.SetFloat("Vertical", v);
+
+        if(h != 0 || v != 0)
+        {
+            animator.SetBool("IsWalking", true);
+        } else
+        {
+            animator.SetBool("IsWalking", false);
+        }
 
         Vector3 camForward = cameraTransform.transform.forward;
         Vector3 camRight   = cameraTransform.transform.right;
@@ -81,6 +96,19 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("[Player] Interação ativada!");
             // Aqui entrará a lógica real de interação futuramente
+        }
+    }
+
+    
+    void HandleRunning()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            animator.SetBool("IsRunnig", true);
+        } 
+        else if(Input.GetKeyUp(KeyCode.LeftShift))
+        {
+            animator.SetBool("IsRunnig", false);
         }
     }
 
