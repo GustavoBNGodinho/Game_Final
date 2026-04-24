@@ -5,8 +5,14 @@ using UnityEngine.AI;
 [RequireComponent(typeof(Animator))]
 public class EnemyAI : MonoBehaviour
 {
-    public enum State { Idle, Chase, Attack, Hit, Dead }
+    public enum State { Idle, Patrol, Chase, Attack, Dead }
     public State currentState = State.Idle;
+
+    [Header("Patrulha")]
+    public float patrolRadius = 10f;
+    public float patrolWaitTime = 2f;
+    private float patrolTimer;
+    private Vector3 patrolTarget;
 
     [Header("Detecção")]
     public float detectionRange = 10f;
@@ -17,6 +23,9 @@ public class EnemyAI : MonoBehaviour
     public float attackCooldown = 1.5f;
     public float attackDelay    = 0.5f; // delay até o hit real (no meio da animação)
 
+    [Header("Velocidade")]
+    public float patrolSpeed = 2f;
+    public float chaseSpeed = 5f;
 
     [Header("Referências")]
     public Transform player;
@@ -61,8 +70,9 @@ public class EnemyAI : MonoBehaviour
         else if (dist <= detectionRange)
             currentState = State.Chase;
         else
-            currentState = State.Idle;
+            currentState = State.Patrol;
     }
+
 
     void ExecuteState(float dist)
     {
@@ -72,9 +82,23 @@ public class EnemyAI : MonoBehaviour
                 agent.isStopped = true;
                 break;
 
+            case State.Patrol:
+                agent.isStopped = false;
+                agent.speed = patrolSpeed;
+                patrolTimer -= Time.deltaTime;
+
+                if (patrolTimer <= 0f || agent.remainingDistance < 0.5f)
+                {
+                    patrolTarget = GetRandomPatrolPoint();
+                    agent.SetDestination(patrolTarget);
+                    patrolTimer = patrolWaitTime;
+                }
+                break;
+
             case State.Chase:
                 animator.ResetTrigger("Attack");
                 agent.isStopped = false;
+                agent.speed = chaseSpeed;
                 agent.SetDestination(player.position);
                 agent.stoppingDistance = attackRange;
                 break;
@@ -87,10 +111,11 @@ public class EnemyAI : MonoBehaviour
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
 
-                if (attackTimer <= 0f)
+            if (attackTimer <= 0f && !animator.GetCurrentAnimatorStateInfo(0).IsName("Attack"))
                 {
+                    Debug.Log($"Trigger Attack setado | Estado Animator: {animator.GetCurrentAnimatorStateInfo(0).IsName("Attack")}");
                     attackTimer = attackCooldown;
-                    animator.SetTrigger("Attack");
+                    animator.Play("Attack", 0, 0f); 
                 }
                 break;
         }
@@ -98,7 +123,7 @@ public class EnemyAI : MonoBehaviour
 
     void UpdateAnimator()
     {
-        animator.SetFloat("Speed", agent.isStopped ? 0f : agent.velocity.magnitude);
+        animator.SetFloat("Speed", agent.velocity.magnitude);
     }
 
     public void ApplyAttackDamage()
@@ -111,6 +136,14 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+    Vector3 GetRandomPatrolPoint()
+    {
+        Vector3 randomDir = Random.insideUnitSphere * patrolRadius;
+        randomDir += transform.position;
+        NavMeshHit hit;
+        NavMesh.SamplePosition(randomDir, out hit, patrolRadius, 1);
+        return hit.position;
+    }
     // Visualização do range no editor
     void OnDrawGizmosSelected()
     {
