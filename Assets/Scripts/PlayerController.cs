@@ -13,11 +13,13 @@ public class PlayerController : MonoBehaviour
     [Header("Referências")]
     public Camera cameraTransform;
 
+    private Animator animator;
     private Rigidbody rb;
     private Vector3 moveDirection;
 
     void Awake()
     {
+        animator = GetComponentInChildren<Animator>();
         rb = GetComponent<Rigidbody>();
         
         if (cameraTransform == null)
@@ -27,6 +29,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         // HandleInput();
+        HandleRunning();
         HandleInteraction();
         HandleAttack();
     }
@@ -36,6 +39,18 @@ public class PlayerController : MonoBehaviour
     {
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
+
+        
+        animator.SetFloat("Horizontal", h);
+        animator.SetFloat("Vertical", v);
+
+        if(h != 0 || v != 0)
+        {
+            animator.SetBool("IsWalking", true);
+        } else
+        {
+            animator.SetBool("IsWalking", false);
+        }
 
         Vector3 camForward = cameraTransform.transform.forward;
         Vector3 camRight   = cameraTransform.transform.right;
@@ -88,16 +103,31 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void HandleRunning()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            animator.SetBool("IsRunning", true);
+        }
+        else if (Input.GetKeyUp(KeyCode.LeftShift))
+        {
+            animator.SetBool("IsRunning", false);
+        }
+    }
+
     void HandleAttack()
     {
         if (Input.GetMouseButtonDown(0))
         {
             Debug.Log("[Player] Ataque executado!");
             RaycastHit hit;
+
             Debug.Log($"Origem: {transform.position + Vector3.up} | Direção: {transform.forward}");
+
             if (Physics.SphereCast(transform.position + Vector3.up, 0.5f, transform.forward, out hit, 2f))
             {
                 Debug.Log($"Raycast acertou: {hit.collider.gameObject.name}");
+
                 EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
                 if (enemy != null)
                     enemy.TakeDamage(25f);
