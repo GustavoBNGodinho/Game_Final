@@ -35,6 +35,7 @@ public class EnemyAI : MonoBehaviour
     private Animator animator;
     private PlayerHealth playerHealth; // criaremos na etapa 4
 
+    private bool isAttacking = false;
     private float attackTimer    = 0f;
     private bool isHit = false;
 
@@ -66,6 +67,8 @@ public class EnemyAI : MonoBehaviour
 
     void UpdateState(float dist)
     {
+        if (isAttacking || isHit) return;
+        
         if (dist <= attackRange)
             currentState = State.Attack;
         else if (dist <= detectionRange)
@@ -115,9 +118,11 @@ public class EnemyAI : MonoBehaviour
 
                 if (attackTimer <= 0f && !isHit && !animator.GetCurrentAnimatorStateInfo(0).IsName("Attack"))
                 {
+                    isAttacking = true;
                     attackTimer = attackCooldown;
                     animator.Play("Attack", 0, 0f);
-                }
+                    Invoke(nameof(ResetAttacking), attackCooldown);
+                }   
                 break;
 
 
@@ -167,5 +172,10 @@ public class EnemyAI : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, detectionRange);
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+    }
+
+    void ResetAttacking()
+    {
+        isAttacking = false;
     }
 }

@@ -31,7 +31,7 @@ public class PlayerController : MonoBehaviour
         if (cameraTransform == null)
             cameraTransform = Camera.main;
 
-        Debug.Log($"Animator encontrado: {animator?.gameObject.name}");
+        // Debug.Log($"Animator encontrado: {animator?.gameObject.name}");
     }
 
     void Update()
@@ -95,7 +95,7 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
-            Debug.Log("[Player] Interação ativada!");
+            // Debug.Log("[Player] Interação ativada!");
         }
     }
 
@@ -112,7 +112,7 @@ public class PlayerController : MonoBehaviour
 
     void AttackUnarmed()
     {   
-        Debug.Log($"[Player] AttackUnarmed | isAttacking: {isAttacking} | isHit: {isHit}");
+        // Debug.Log($"[Player] AttackUnarmed | isAttacking: {isAttacking} | isHit: {isHit}");
         if (isAttacking || isHit) return;
             isAttacking = true;
             moveDirection = Vector3.zero;
@@ -131,14 +131,14 @@ public class PlayerController : MonoBehaviour
             if (enemy != null)
             {
                 enemy.TakeDamage(25f);
-                Debug.Log("[Player] Acertou o inimigo!");
+                // Debug.Log("[Player] Acertou o inimigo!");
             }
         }
     }
 
     void AttackArmed()
     {
-        Debug.Log("[Player] Ataque armado!");
+        // Debug.Log("[Player] Ataque armado!");
         animator.SetTrigger("AttackArmed");
         // lógica de arma virá aqui futuramente
     }
@@ -158,7 +158,7 @@ public class PlayerController : MonoBehaviour
         animator.ResetTrigger("Hit");
         animator.SetTrigger("Hit");
         Invoke(nameof(ResetHit), 0.5f);
-        Debug.Log($"[Player] OnHit chamado | isHit: {isHit} | estado animator: {animator.GetCurrentAnimatorStateInfo(0).IsName("Hit")}");
+        // Debug.Log($"[Player] OnHit chamado | isHit: {isHit} | estado animator: {animator.GetCurrentAnimatorStateInfo(0).IsName("Hit")}");
     }
 
     void ResetHit()
