@@ -36,6 +36,7 @@ public class EnemyAI : MonoBehaviour
     private PlayerHealth playerHealth; // criaremos na etapa 4
 
     private float attackTimer    = 0f;
+    private bool isHit = false;
 
     void Awake()
     {
@@ -60,7 +61,7 @@ public class EnemyAI : MonoBehaviour
         UpdateState(distToPlayer);
         ExecuteState(distToPlayer);
         UpdateAnimator();
-        Debug.Log($"Estado atual: {currentState}");
+        // Debug.Log($"Estado atual: {currentState}");
     }
 
     void UpdateState(float dist)
@@ -106,20 +107,35 @@ public class EnemyAI : MonoBehaviour
             case State.Attack:
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
+                
                 Vector3 dir = (player.position - transform.position).normalized;
                 dir.y = 0;
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
 
-            if (attackTimer <= 0f && !animator.GetCurrentAnimatorStateInfo(0).IsName("Attack"))
+                if (attackTimer <= 0f && !isHit && !animator.GetCurrentAnimatorStateInfo(0).IsName("Attack"))
                 {
-                    Debug.Log($"Trigger Attack setado | Estado Animator: {animator.GetCurrentAnimatorStateInfo(0).IsName("Attack")}");
                     attackTimer = attackCooldown;
-                    animator.Play("Attack", 0, 0f); 
+                    animator.Play("Attack", 0, 0f);
                 }
                 break;
+
+
         }
     }
+
+    public void OnHit()
+    {
+        isHit = true;
+        animator.Play("Hit", 0, 0f);
+        Invoke(nameof(ResetHit), 0.5f); // ajusta para a duração do clip de Hit
+    }
+
+    void ResetHit()
+    {
+        isHit = false;
+    }
+
 
     void UpdateAnimator()
     {
@@ -132,7 +148,7 @@ public class EnemyAI : MonoBehaviour
         if (Vector3.Distance(transform.position, player.position) <= attackRange + 0.5f)
         {
             playerHealth?.TakeDamage(attackDamage);
-            Debug.Log("[Inimigo] Atacou o player!");
+            // Debug.Log("[Inimigo] Atacou o player!");
         }
     }
 

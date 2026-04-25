@@ -26,7 +26,7 @@ public class EnemyHealth : MonoBehaviour
         if (currentHealth <= 0)
             Die();
         else
-            animator.SetTrigger("Hit");
+            GetComponent<EnemyAI>().OnHit();
     }
 
     void Die()
