@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -32,6 +33,10 @@ public class PlayerController : MonoBehaviour
         HandleRunning();
         HandleInteraction();
         HandleAttack();
+        if(Input.GetKeyDown(KeyCode.B))
+        {
+            SceneManager.LoadScene("Asylum", LoadSceneMode.Additive);
+        }
     }
 
 
