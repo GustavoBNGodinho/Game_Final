@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6964272388865737228
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 418126091517757187}
+  - component: {fileID: 6074660948258445397}
+  m_Layer: 0
+  m_Name: BoxBullet
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &418126091517757187
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6964272388865737228}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.1, y: 2, z: 2.74}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4535771021396815550}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6074660948258445397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6964272388865737228}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95ad3bbb5fc017c488727ade4f6c574b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoxBulletControler
+  distanceToDetect: 2
+  valeu: 6
+  txtGetBullet: {fileID: 0}
+--- !u!1001 &4141326811569277269
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 418126091517757187}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -67680553602904545, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -67680553602904545, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+      propertyPath: m_Name
+      value: modelo caixa luxcontrol
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects:
+    - {fileID: 5132003385300154824, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    - {fileID: -1171447989860636430, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    - {fileID: 3183833292179703973, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    - {fileID: 8034695930588502544, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    - {fileID: -2871638212205385780, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    - {fileID: -58098161969866809, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    - {fileID: -4760783524226263403, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    - {fileID: 5224471818856885279, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    - {fileID: 3162582965789799251, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    - {fileID: -2346888503266430461, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+--- !u!4 &4535771021396815550 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3e95d1f6c466d944ea4e615f584836b9, type: 3}
+  m_PrefabInstance: {fileID: 4141326811569277269}
+  m_PrefabAsset: {fileID: 0}

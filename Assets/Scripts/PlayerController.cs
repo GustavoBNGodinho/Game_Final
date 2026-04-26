@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -10,18 +11,30 @@ public class PlayerController : MonoBehaviour
     public float walkSpeed = 3f;
     public float runSpeed = 6f;
 
+    [Header("Combate")]
+    public bool isArmed = false;
+
+    [Header("Configuração de Tiro")]
+    public TextMeshProUGUI tmpBullet;
+    private float quantBullet = 12;
+
+    [Header("Efeito Visual")]
+    public LineRenderer tiroLinha; // Arraste o objeto "LinhaDoTiro" para cá
+    public float tempoExibicaoLinha = 0.05f;
+
     [Header("Referências")]
     public Camera cameraTransform;
 
     private Animator animator;
     private Rigidbody rb;
     private Vector3 moveDirection;
+    public GameObject pistola;
 
     void Awake()
     {
         animator = GetComponentInChildren<Animator>();
         rb = GetComponent<Rigidbody>();
-        
+        pistola.SetActive(isArmed);
         if (cameraTransform == null)
             cameraTransform = Camera.main;
     }
@@ -32,6 +45,8 @@ public class PlayerController : MonoBehaviour
         HandleRunning();
         HandleInteraction();
         HandleAttack();
+        HandleGun();
+        SetUI();
     }
 
 
@@ -115,29 +130,128 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void HandleGun()
+    {
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (isArmed)
+            {
+                animator.SetBool("WithGun", false);
+                Debug.Log("[Player] não esta Armado!");
+                isArmed = false;
+                pistola.SetActive(isArmed);
+            }
+            else
+            {
+                animator.SetBool("WithGun", true);
+                Debug.Log("[Player] esta Armado!");
+                isArmed = true;
+                pistola.SetActive(isArmed);
+            }
+
+        }
+    }
+
     void HandleAttack()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log("[Player] Ataque executado!");
-            RaycastHit hit;
-
-            Debug.Log($"Origem: {transform.position + Vector3.up} | Direção: {transform.forward}");
-
-            if (Physics.SphereCast(transform.position + Vector3.up, 0.5f, transform.forward, out hit, 2f))
+            if (isArmed)
             {
-                Debug.Log($"Raycast acertou: {hit.collider.gameObject.name}");
+                if (quantBullet != 0)
+                {
+                    ReduceBullet();
+                    AttackArmed();
+                }
 
-                EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-                if (enemy != null)
-                    enemy.TakeDamage(25f);
-                else
-                    Debug.Log("Objeto acertado não tem EnemyHealth");
+
             }
             else
             {
-                Debug.Log("Raycast não acertou nada");
+                Debug.Log("[Player] Ataque executado!");
+                RaycastHit hit;
+
+                Debug.Log($"Origem: {transform.position + Vector3.up} | Direção: {transform.forward}");
+
+                if (Physics.SphereCast(transform.position + Vector3.up, 0.5f, transform.forward, out hit, 2f))
+                {
+                    Debug.Log($"Raycast acertou: {hit.collider.gameObject.name}");
+
+                    EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
+                    if (enemy != null)
+                        enemy.TakeDamage(25f);
+                    else
+                        Debug.Log("Objeto acertado não tem EnemyHealth");
+                }
+                else
+                {
+                    Debug.Log("Raycast não acertou nada");
+                }
+            }
+            
+        }
+    }
+
+    void ReduceBullet()
+    {
+        quantBullet = Mathf.Clamp(quantBullet -= 1, 0, 99);
+    }
+
+    public void AddBullet(float valeu)
+    {
+        quantBullet = Mathf.Clamp(quantBullet += valeu, 0, 99);
+    }
+
+    void SetUI()
+    {
+        tmpBullet.text = quantBullet.ToString();
+    }
+
+    void AttackArmed()
+    {
+        Debug.Log("[Player] Ataque armado!");
+        animator.SetTrigger("AttackArmed");
+        ShootBullet();
+        // lógica de arma virá aqui futuramente
+    }
+
+    public void ShootBullet()
+    {
+        Debug.Log("[Player] Bala aTIRADA:");
+        RaycastHit hit;
+        Vector3 pontoFinal;
+        // Dispara um raio fino (ou esfera) para frente a partir do firePoint
+        // Raio de 0.1f para ser preciso como uma bala, alcance de 50 metros
+        if (Physics.SphereCast(transform.position + Vector3.up, 0.5f, transform.forward, out hit, 50f))
+        {
+            pontoFinal = hit.point;
+
+            Debug.Log($"[Player] Bala atingiu: {hit.collider.name}");
+
+            EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(25f);
+                Debug.Log("[Player] Dano de tiro contabilizado no inimigo!");
             }
         }
+        else
+        {
+            pontoFinal = transform.position + Vector3.up + (transform.forward * 50f);
+        }
+
+        StartCoroutine(MostrarFeixe(pontoFinal));
+    }
+
+
+    System.Collections.IEnumerator MostrarFeixe(Vector3 destino)
+    {
+        tiroLinha.SetPosition(0, transform.position + Vector3.up); // Começo no cano
+        tiroLinha.SetPosition(1, destino);            // Fim no alvo
+        tiroLinha.enabled = true;
+
+        yield return new WaitForSeconds(tempoExibicaoLinha);
+
+        tiroLinha.enabled = false;
     }
 }
