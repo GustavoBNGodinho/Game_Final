@@ -13,13 +13,14 @@ public class PlayerController : MonoBehaviour
 
     [Header("Combate")]
     public bool isArmed = false;
+    private bool isLocked = false; // NOVA: Controle de trava
 
     [Header("Configuração de Tiro")]
     public TextMeshProUGUI tmpBullet;
     private float quantBullet = 12;
 
     [Header("Efeito Visual")]
-    public LineRenderer tiroLinha; // Arraste o objeto "LinhaDoTiro" para cá
+    public LineRenderer tiroLinha;
     public float tempoExibicaoLinha = 0.05f;
 
     [Header("Referências")]
@@ -29,6 +30,10 @@ public class PlayerController : MonoBehaviour
     private Rigidbody rb;
     private Vector3 moveDirection;
     public GameObject pistola;
+    private bool isDead = false;
+    public bool isAttacking = false;
+    private bool isHit = false;
+
 
     void Awake()
     {
@@ -41,7 +46,11 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // HandleInput();
+        if (isDead) return;
+        if (isHit) return;
+        // NOVA: Verifica se está segurando Q
+        isLocked = Input.GetKey(KeyCode.Q);
+
         HandleRunning();
         HandleInteraction();
         HandleAttack();
@@ -49,72 +58,68 @@ public class PlayerController : MonoBehaviour
         SetUI();
     }
 
-
     void FixedUpdate()
     {
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
 
-        
-        animator.SetFloat("Horizontal", h);
-        animator.SetFloat("Vertical", v);
+        // AJUSTE: Se travar, as animações de pernas param (ficam em Idle)
+        animator.SetFloat("Horizontal", isLocked ? 0 : h);
+        animator.SetFloat("Vertical", isLocked ? 0 : v);
 
-        if(h != 0 || v != 0)
+        if (!isLocked && (h != 0 || v != 0))
         {
             animator.SetBool("IsWalking", true);
-        } else
+        }
+        else
         {
             animator.SetBool("IsWalking", false);
         }
 
         Vector3 camForward = cameraTransform.transform.forward;
-        Vector3 camRight   = cameraTransform.transform.right;
+        Vector3 camRight = cameraTransform.transform.right;
         camForward.y = 0f;
-        camRight.y   = 0f;
+        camRight.y = 0f;
         camForward.Normalize();
         camRight.Normalize();
 
         moveDirection = (camForward * v + camRight * h).normalized;
-        Move();
-    }
-
-    void HandleInput()
-    {
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
-
-        // Direção relativa à câmera
-        Vector3 camForward = cameraTransform.transform.forward;
-        Vector3 camRight   = cameraTransform.transform.right;
-        camForward.y = 0f;
-        camRight.y   = 0f;
-        camForward.Normalize();
-        camRight.Normalize();
-
-        moveDirection = (camForward * v + camRight * h).normalized;
+        if (!isAttacking && !isHit)
+            Move();
     }
 
     void Move()
     {
+        // ROTAÇÃO: Fica fora de qualquer trava para o personagem sempre girar
         if (moveDirection.magnitude > 0.1f)
         {
             Quaternion targetRot = Quaternion.LookRotation(moveDirection);
             rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
         }
 
-        bool isRunning = Input.GetKey(KeyCode.LeftShift);
-        float currentSpeed = isRunning ? runSpeed : walkSpeed;
-        Vector3 velocity = moveDirection * currentSpeed;
-        velocity.y = rb.linearVelocity.y;
-        rb.linearVelocity = velocity;
+        // MOVIMENTO: Só aplica velocidade se NÃO estiver travado com Q
+        if (!isLocked)
+        {
+            bool isRunning = Input.GetKey(KeyCode.LeftShift);
+            float currentSpeed = isRunning ? runSpeed : walkSpeed;
+            Vector3 velocity = moveDirection * currentSpeed;
+            velocity.y = rb.linearVelocity.y;
+            rb.linearVelocity = velocity;
+        }
+        else
+        {
+            // Se travar, paramos o movimento horizontal mas mantemos a gravidade (y)
+            rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+        }
     }
+
+    // --- OS MÉTODOS ABAIXO CONTINUAM IGUAIS AO SEU ORIGINAL ---
 
     void HandleInteraction()
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
             Debug.Log("[Player] Interação ativada!");
-            // Aqui entrará a lógica real de interação futuramente
         }
     }
 
@@ -134,21 +139,10 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F))
         {
-            if (isArmed)
-            {
-                animator.SetBool("WithGun", false);
-                Debug.Log("[Player] não esta Armado!");
-                isArmed = false;
-                pistola.SetActive(isArmed);
-            }
-            else
-            {
-                animator.SetBool("WithGun", true);
-                Debug.Log("[Player] esta Armado!");
-                isArmed = true;
-                pistola.SetActive(isArmed);
-            }
-
+            isArmed = !isArmed;
+            animator.SetBool("WithGun", isArmed);
+            pistola.SetActive(isArmed);
+            Debug.Log("[Player] Armado: " + isArmed);
         }
     }
 
@@ -158,48 +152,61 @@ public class PlayerController : MonoBehaviour
         {
             if (isArmed)
             {
-                if (quantBullet != 0)
+                if (quantBullet > 0)
                 {
                     ReduceBullet();
                     AttackArmed();
                 }
-
-
             }
             else
             {
-                Debug.Log("[Player] Ataque executado!");
-                RaycastHit hit;
-
-                Debug.Log($"Origem: {transform.position + Vector3.up} | Direção: {transform.forward}");
-
-                if (Physics.SphereCast(transform.position + Vector3.up, 0.5f, transform.forward, out hit, 2f))
-                {
-                    Debug.Log($"Raycast acertou: {hit.collider.gameObject.name}");
-
-                    EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-                    if (enemy != null)
-                        enemy.TakeDamage(25f);
-                    else
-                        Debug.Log("Objeto acertado não tem EnemyHealth");
-                }
-                else
-                {
-                    Debug.Log("Raycast não acertou nada");
-                }
+                AttackUnarmed();
             }
-            
         }
     }
 
-    void ReduceBullet()
-    {
-        quantBullet = Mathf.Clamp(quantBullet -= 1, 0, 99);
+    void AttackUnarmed()
+    {   
+        Debug.Log($"[Player] AttackUnarmed | isAttacking: {isAttacking} | isHit: {isHit}");
+        if (isAttacking || isHit) return;
+            isAttacking = true;
+            moveDirection = Vector3.zero;
+            rb.linearVelocity = Vector3.zero;
+            animator.SetTrigger("AttackUnarmed");
+            Invoke(nameof(ResetAttack), 1.5f); // fallback caso o evento falhe
     }
 
-    public void AddBullet(float valeu)
+    public void OnUnarmedHit()
     {
-        quantBullet = Mathf.Clamp(quantBullet += valeu, 0, 99);
+        RaycastHit hit;
+        if (Physics.SphereCast(transform.position + Vector3.up, 0.5f, transform.forward, out hit, 2f))
+        {
+            EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(25f);
+                Debug.Log("[Player] Acertou o inimigo!");
+            }
+        }
+    }
+    void ReduceBullet()
+    {
+        quantBullet = Mathf.Clamp(quantBullet - 1, 0, 99);
+    }
+
+    public void AddBullet(float value)
+    {
+        quantBullet = Mathf.Clamp(quantBullet + value, 0, 99);
+    }
+
+    public void ReduceLife(float value)
+    {
+        quantBullet = Mathf.Clamp(quantBullet -= value, 0, 100);
+    }
+
+    public void AddLife(float value)
+    {
+        quantBullet = Mathf.Clamp(quantBullet + value, 0, 100);
     }
 
     void SetUI()
@@ -209,31 +216,19 @@ public class PlayerController : MonoBehaviour
 
     void AttackArmed()
     {
-        Debug.Log("[Player] Ataque armado!");
         animator.SetTrigger("AttackArmed");
         ShootBullet();
-        // lógica de arma virá aqui futuramente
     }
 
     public void ShootBullet()
     {
-        Debug.Log("[Player] Bala aTIRADA:");
         RaycastHit hit;
         Vector3 pontoFinal;
-        // Dispara um raio fino (ou esfera) para frente a partir do firePoint
-        // Raio de 0.1f para ser preciso como uma bala, alcance de 50 metros
         if (Physics.SphereCast(transform.position + Vector3.up, 0.5f, transform.forward, out hit, 50f))
         {
             pontoFinal = hit.point;
-
-            Debug.Log($"[Player] Bala atingiu: {hit.collider.name}");
-
             EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-            if (enemy != null)
-            {
-                enemy.TakeDamage(25f);
-                Debug.Log("[Player] Dano de tiro contabilizado no inimigo!");
-            }
+            if (enemy != null) enemy.TakeDamage(25f);
         }
         else
         {
@@ -243,15 +238,51 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(MostrarFeixe(pontoFinal));
     }
 
-
     System.Collections.IEnumerator MostrarFeixe(Vector3 destino)
     {
-        tiroLinha.SetPosition(0, transform.position + Vector3.up); // Começo no cano
-        tiroLinha.SetPosition(1, destino);            // Fim no alvo
+        tiroLinha.SetPosition(0, transform.position + Vector3.up);
+        tiroLinha.SetPosition(1, destino);
         tiroLinha.enabled = true;
-
         yield return new WaitForSeconds(tempoExibicaoLinha);
-
         tiroLinha.enabled = false;
+    }
+
+    void ResetAttack()
+    {
+        isAttacking = false;
+    }
+
+    public void OnHit()
+    {
+        isHit = true;
+        isAttacking = false;
+        CancelInvoke(nameof(ResetAttack));
+        moveDirection = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
+        animator.ResetTrigger("Hit");
+        animator.SetTrigger("Hit");
+        Invoke(nameof(ResetHit), 0.5f);
+        Debug.Log($"[Player] OnHit chamado | isHit: {isHit} | estado animator: {animator.GetCurrentAnimatorStateInfo(0).IsName("Hit")}");
+    }
+
+    void ResetHit()
+    {
+        animator.ResetTrigger("Hit");
+        isHit = false;
+    }
+
+    public void OnDeath()
+    {
+        if (isDead) return;
+        isDead = true;
+        isAttacking = false;
+        isHit = false;
+        CancelInvoke();
+        moveDirection = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
+        animator.SetBool("IsWalking", false);
+        animator.SetBool("IsRunning", false);
+        animator.SetTrigger("Death");
+        enabled = false;
     }
 }
