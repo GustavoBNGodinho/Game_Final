@@ -322,7 +322,7 @@ public class EnemyAI : MonoBehaviour
         {
             if (!footstepSource.isPlaying)
                 footstepSource.Play();
-            footstepSource.pitch = currentState == State.Chase ? 1.25f : 1.1f;
+            footstepSource.pitch = currentState == State.Chase ? 1.67f : 1.1f;
         }
         else
         {
