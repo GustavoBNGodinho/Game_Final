@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
     public AudioSource pistolDry;
     public AudioSource pistolDraw;
     public AudioSource playerHurt;
+    public AudioSource playerDeath;
 
     [Header("Velocidade")]
     public float walkSpeed = 3f;
@@ -367,6 +368,7 @@ public class PlayerController : MonoBehaviour
         CancelInvoke();
         moveDirection = Vector3.zero;
         rb.linearVelocity = Vector3.zero;
+        playerDeath.PlayOneShot(playerDeath.clip);
         animator.SetBool("IsWalking", false);
         animator.SetBool("IsRunning", false);
         animator.SetTrigger("Death");
