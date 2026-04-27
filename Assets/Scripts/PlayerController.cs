@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using TMPro;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Combate")]
     public bool isArmed = false;
-    private bool isLocked = false; // NOVA: Controle de trava
+    private bool isAiming = false; // NOVA: Controle de trava
 
     [Header("Configuração de Tiro")]
     public TextMeshProUGUI tmpBullet;
@@ -48,9 +49,9 @@ public class PlayerController : MonoBehaviour
     {
         if (isDead) return;
         if (isHit) return;
-        // NOVA: Verifica se está segurando Q
-        isLocked = Input.GetKey(KeyCode.Q);
-
+        
+        isAiming = Input.GetKey(KeyCode.Mouse1);
+        animator.SetBool("IsAiming", isAiming);
         HandleRunning();
         HandleInteraction();
         HandleAttack();
@@ -64,10 +65,10 @@ public class PlayerController : MonoBehaviour
         float v = Input.GetAxisRaw("Vertical");
 
         // AJUSTE: Se travar, as animações de pernas param (ficam em Idle)
-        animator.SetFloat("Horizontal", isLocked ? 0 : h);
-        animator.SetFloat("Vertical", isLocked ? 0 : v);
+        animator.SetFloat("Horizontal", Mathf.Abs(h));
+        animator.SetFloat("RawHorizontal", h);
 
-        if (!isLocked && (h != 0 || v != 0))
+        if (!isAiming && (h != 0 || v != 0))
         {
             animator.SetBool("IsWalking", true);
         }
@@ -85,21 +86,21 @@ public class PlayerController : MonoBehaviour
 
         moveDirection = (camForward * v + camRight * h).normalized;
         if (!isAttacking && !isHit)
-            Move();
+            Move(h);
     }
 
-    void Move()
+    void Move(float h)
     {
         // ROTAÇÃO: Fica fora de qualquer trava para o personagem sempre girar
-        if (moveDirection.magnitude > 0.1f)
-        {
-            Quaternion targetRot = Quaternion.LookRotation(moveDirection);
-            rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
-        }
 
         // MOVIMENTO: Só aplica velocidade se NÃO estiver travado com Q
-        if (!isLocked)
+        if (!isAiming)
         {
+            if (moveDirection.magnitude > 0.1f)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(moveDirection);
+                rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
+            }
             bool isRunning = Input.GetKey(KeyCode.LeftShift);
             float currentSpeed = isRunning ? runSpeed : walkSpeed;
             Vector3 velocity = moveDirection * currentSpeed;
@@ -110,6 +111,8 @@ public class PlayerController : MonoBehaviour
         {
             // Se travar, paramos o movimento horizontal mas mantemos a gravidade (y)
             rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+            Quaternion rot = Quaternion.Euler(0f, h * rotationSpeed * 10 * Time.fixedDeltaTime, 0f);
+            rb.MoveRotation(rb.rotation * rot);
         }
     }
 
@@ -129,10 +132,11 @@ public class PlayerController : MonoBehaviour
         {
             animator.SetBool("IsRunning", true);
         }
-        else if (Input.GetKeyUp(KeyCode.LeftShift))
+        else if (Input.GetKeyUp(KeyCode.LeftShift) || isAiming)
         {
             animator.SetBool("IsRunning", false);
         }
+
     }
 
     void HandleGun()
@@ -140,9 +144,16 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F))
         {
             isArmed = !isArmed;
-            animator.SetBool("WithGun", isArmed);
             pistola.SetActive(isArmed);
             Debug.Log("[Player] Armado: " + isArmed);
+        }
+          if(isAiming && isArmed)
+        {
+            animator.SetBool("WithGun", true);
+        }
+        else
+        {
+            animator.SetBool("WithGun", false);
         }
     }
 
@@ -166,14 +177,16 @@ public class PlayerController : MonoBehaviour
     }
 
     void AttackUnarmed()
-    {   
+    {   if(isAiming)
+        {
         Debug.Log($"[Player] AttackUnarmed | isAttacking: {isAttacking} | isHit: {isHit}");
         if (isAttacking || isHit) return;
             isAttacking = true;
             moveDirection = Vector3.zero;
             rb.linearVelocity = Vector3.zero;
             animator.SetTrigger("AttackUnarmed");
-            Invoke(nameof(ResetAttack), 1.5f); // fallback caso o evento falhe
+            Invoke(nameof(ResetAttack), 1.5f); 
+        }
     }
 
     public void OnUnarmedHit()
@@ -216,15 +229,18 @@ public class PlayerController : MonoBehaviour
 
     void AttackArmed()
     {
+        if(isAiming)
+        {
         animator.SetTrigger("AttackArmed");
-        ShootBullet();
+        ShootBullet();    
+        }
     }
 
     public void ShootBullet()
     {
         RaycastHit hit;
         Vector3 pontoFinal;
-        if (Physics.SphereCast(transform.position + Vector3.up, 0.5f, transform.forward, out hit, 50f))
+        if (Physics.SphereCast(transform.position + Vector3.up, 2f, transform.forward, out hit, 50f))
         {
             pontoFinal = hit.point;
             EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
