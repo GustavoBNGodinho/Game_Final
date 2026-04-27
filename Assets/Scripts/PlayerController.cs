@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     public AudioSource pistolFire;
     public AudioSource pistolDry;
     public AudioSource pistolDraw;
+    public AudioSource playerHurt;
 
     [Header("Velocidade")]
     public float walkSpeed = 3f;
@@ -338,12 +339,13 @@ public class PlayerController : MonoBehaviour
     }
 
     public void OnHit()
-    {
+    {   
         isHit = true;
         isAttacking = false;
         CancelInvoke(nameof(ResetAttack));
         moveDirection = Vector3.zero;
         rb.linearVelocity = Vector3.zero;
+        playerHurt.PlayOneShot(playerHurt.clip);
         animator.ResetTrigger("Hit");
         animator.SetTrigger("Hit");
         Invoke(nameof(ResetHit), 0.5f);

@@ -1690,6 +1690,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2031433263}
     - target: {fileID: 8249770356445462723, guid: 84e5fbb77de645946804d9b224af508e, type: 3}
+      propertyPath: swing
+      value: 
+      objectReference: {fileID: 2031433263}
+    - target: {fileID: 8249770356445462723, guid: 84e5fbb77de645946804d9b224af508e, type: 3}
       propertyPath: chaseGrowl
       value: 
       objectReference: {fileID: 2031433261}
@@ -2695,7 +2699,7 @@ AudioSource:
   m_Resource: {fileID: 8300000, guid: 3db8dfda53c6fe542a3f14da554429e6, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
-  m_Pitch: 1
+  m_Pitch: 0.6
   Loop: 0
   Mute: 0
   Spatialize: 0
