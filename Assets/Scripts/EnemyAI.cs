@@ -31,6 +31,17 @@ public class EnemyAI : MonoBehaviour
     public Transform player;
     public LayerMask playerLayer;
 
+    [Header("SFX")]
+    public AudioSource footstepSource;
+    public AudioSource patrolGrowl;
+    public AudioSource chaseGrowl;
+    public AudioSource Swing;
+
+
+    [Header("SFX Timers")]
+    private float nextPatrolSoundTime = 0f;
+    private float nextChaseGrowlTime = 0f;
+
     private NavMeshAgent agent;
     private Animator animator;
     private PlayerHealth playerHealth; // criaremos na etapa 4
@@ -61,6 +72,8 @@ public class EnemyAI : MonoBehaviour
         ExecuteState(distToPlayer);
         UpdateAnimator();
         Debug.Log($"Estado atual: {currentState}");
+
+        HandleMovementSFX();
     }
 
     void UpdateState(float dist)
@@ -93,9 +106,20 @@ public class EnemyAI : MonoBehaviour
                     agent.SetDestination(patrolTarget);
                     patrolTimer = patrolWaitTime;
                 }
+
+                if (Time.time >= nextPatrolSoundTime)
+                {
+                    patrolGrowl.PlayOneShot(patrolGrowl.clip);
+                    nextPatrolSoundTime = Time.time + Random.Range(4f, 10f);
+                }                
                 break;
 
             case State.Chase:
+                if (Time.time >= nextChaseGrowlTime)
+                {
+                    chaseGrowl.PlayOneShot(chaseGrowl.clip);
+                    nextChaseGrowlTime = Time.time + Random.Range(3f, 5f);
+                }
                 animator.ResetTrigger("Attack");
                 agent.isStopped = false;
                 agent.speed = chaseSpeed;
@@ -115,6 +139,8 @@ public class EnemyAI : MonoBehaviour
                 {
                     Debug.Log($"Trigger Attack setado | Estado Animator: {animator.GetCurrentAnimatorStateInfo(0).IsName("Attack")}");
                     attackTimer = attackCooldown;
+                    Swing.PlayDelayed(0.6f);
+                    patrolGrowl.PlayDelayed(0.0f);
                     animator.Play("Attack", 0, 0f); 
                 }
                 break;
@@ -144,6 +170,26 @@ public class EnemyAI : MonoBehaviour
         NavMesh.SamplePosition(randomDir, out hit, patrolRadius, 1);
         return hit.position;
     }
+
+
+    void HandleMovementSFX()
+    {
+        bool isMoving = agent.velocity.magnitude > 0.1f;
+
+        if (isMoving)
+        {
+            if (!footstepSource.isPlaying)
+                footstepSource.Play();
+
+            footstepSource.pitch = currentState == State.Chase ? 1.25f : 1.1f;
+        }
+        else
+        {
+            if (footstepSource.isPlaying)
+                footstepSource.Stop();
+        }
+    }
+
     // Visualização do range no editor
     void OnDrawGizmosSelected()
     {

@@ -8,6 +8,13 @@ public class PlayerController : MonoBehaviour
     [Header("Movimento")]
     public float rotationSpeed = 10f;
 
+    [Header("SFX")]
+    public AudioSource footstepSource;
+    public AudioSource clothesSource;
+    public AudioSource pistolFire;
+    public AudioSource pistolDry;
+    public AudioSource pistolDraw;
+
     [Header("Velocidade")]
     public float walkSpeed = 3f;
     public float runSpeed = 6f;
@@ -136,7 +143,7 @@ public class PlayerController : MonoBehaviour
         {
             animator.SetBool("IsRunning", false);
         }
-
+        HandleMoveSFX();
     }
 
     void HandleGun()
@@ -145,6 +152,12 @@ public class PlayerController : MonoBehaviour
         {
             isArmed = !isArmed;
             pistola.SetActive(isArmed);
+
+            if (isArmed)
+            {
+                GunDrawSFX();
+            }
+
             Debug.Log("[Player] Armado: " + isArmed);
         }
           if(isAiming && isArmed)
@@ -165,8 +178,14 @@ public class PlayerController : MonoBehaviour
             {
                 if (quantBullet > 0)
                 {
+                    GunFireSFX();
                     ReduceBullet();
                     AttackArmed();
+                    
+                }
+                else
+                {
+                    GunDrySFX();
                 }
             }
             else
@@ -253,6 +272,58 @@ public class PlayerController : MonoBehaviour
 
         StartCoroutine(MostrarFeixe(pontoFinal));
     }
+
+    void HandleMoveSFX()
+    {
+        bool isMoving = moveDirection.magnitude > 0.1f;
+        bool isRunning = Input.GetKey(KeyCode.LeftShift);
+
+        if (isMoving)
+        {
+            if (!footstepSource.isPlaying)
+            {
+                footstepSource.Play();
+            }
+
+            footstepSource.pitch = isRunning ? 1.3f : 1f;
+
+
+            if (!clothesSource.isPlaying)
+            {
+                clothesSource.Play();
+            }
+            clothesSource.pitch = isRunning ? 1.6f : 1f;
+        }
+        else
+        {
+            if (footstepSource.isPlaying)
+            {
+                footstepSource.Stop();
+            }
+
+            if (clothesSource.isPlaying)
+            {
+                clothesSource.Stop();
+            }
+        }
+    }
+
+    void GunFireSFX()
+    {
+        pistolFire.PlayOneShot(pistolFire.clip);
+    }
+
+
+    void GunDrySFX()
+    {
+        pistolDry.PlayOneShot(pistolDry.clip);
+    }
+
+    void GunDrawSFX()
+    {
+        pistolDraw.Play();
+    }
+
 
     System.Collections.IEnumerator MostrarFeixe(Vector3 destino)
     {
