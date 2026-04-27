@@ -25,7 +25,8 @@ public class EnemyAI : MonoBehaviour
     [Header("Combate")]
     public float attackRange    = 1.8f;
     public float attackDamage   = 10f;
-    public float attackCooldown = 1.5f;
+    public float attackCooldown     = 2.7f;
+
 
     [Header("Velocidade")]
     public float patrolSpeed      = 2f;
@@ -46,21 +47,25 @@ public class EnemyAI : MonoBehaviour
     public AudioSource chaseGrowl;
     public AudioSource swing;
 
-    [Header("SFX Timers")]
-    private float nextPatrolSoundTime = 0f;
-    private float nextChaseGrowlTime  = 0f;
-
     [Header("Perseguição")]
     public float pathUpdateInterval = 0.15f;
     private float pathUpdateTimer   = 0f;
+
+    private float nextPatrolSoundTime = 0f;
+    private float nextChaseGrowlTime  = 0f;
 
     private NavMeshAgent agent;
     private Animator     animator;
     private PlayerHealth playerHealth;
 
     private float attackTimer = 0f;
-    public bool  isAttacking = false;
-    private bool  isHit       = false;
+    public  bool  isAttacking = false;
+    public  bool  isHit       = false;
+    private float attackingTimeout = 0f;
+    private float hittingTimeout   = 0f;
+
+    public float attackAnimDuration = 2.633f;
+    public float hitAnimDuration    = 2f;
 
     void Awake()
     {
@@ -81,13 +86,12 @@ public class EnemyAI : MonoBehaviour
         attackTimer -= Time.deltaTime;
         float dist = Vector3.Distance(transform.position, player.position);
 
+        TickTimeouts(); // estava faltando essa linha
         UpdateState(dist);
         ExecuteState(dist);
         UpdateAnimator();
         HandleMovementSFX();
-        Debug.Log("isAttacking: " + isAttacking);
     }
-
     // ─── Detecção ─────────────────────────────────────────────────────────────
 
     bool CanSeePlayer()
@@ -176,7 +180,6 @@ public class EnemyAI : MonoBehaviour
 
             case State.Chase:
                 if (isHit) break;
-                if (isAttacking) break;
 
                 if (Time.time >= nextChaseGrowlTime)
                 {
@@ -214,8 +217,8 @@ public class EnemyAI : MonoBehaviour
                 break;
 
             case State.Attack:
-                agent.isStopped  = true;
-                agent.velocity   = Vector3.zero;
+                agent.isStopped = true;
+                agent.velocity  = Vector3.zero;
 
                 if (isHit) break;
 
@@ -224,16 +227,12 @@ public class EnemyAI : MonoBehaviour
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
 
-                // if (attackTimer <= 0f && !isAttacking)
-                if (attackTimer <= 0f)
+                if (attackTimer <= 0f && !isAttacking && attackingTimeout <= 0f)
                 {
-                    // isAttacking = true;
-                    attackTimer = attackCooldown;
-                    // swing.PlayDelayed(0.6f); COMENTAR ESSA LINHA RESOLVE BUG QUE TRAVAVA O MAYNARD
+                    attackTimer      = attackCooldown;
                     patrolGrowl.PlayDelayed(0.0f);
                     animator.ResetTrigger("Attack");
                     animator.SetTrigger("Attack");
-                    // Invoke(nameof(ResetAttacking), attackCooldown);
                 }
                 break;
         }
@@ -244,31 +243,71 @@ public class EnemyAI : MonoBehaviour
         animator.SetFloat("Speed", agent.isStopped ? 0f : agent.velocity.magnitude);
     }
 
-    // ─── Callbacks ────────────────────────────────────────────────────────────
+    // ─── Animation Events ─────────────────────────────────────────────────────
 
-    void ResetAttacking() => isAttacking = false;
-
-    public void OnHit()
+    // Chamar no primeiro frame do clipe Attack:  SetAttacking(1)
+    // Chamar no último frame do clipe Attack:    SetAttacking(0)
+    // Chamar no primeiro frame do clipe Hit:     SetHit(1)
+    // Chamar no último frame do clipe Hit:       SetHit(0)
+    public void SetAttacking(int value)
     {
-        // isHit       = true;
-        isAttacking = false;
-        currentState = State.Idle;
-        agent.isStopped = true;
-        agent.ResetPath();
-        // CancelInvoke(nameof(ResetAttacking));
-        // animator.ResetTrigger("Attack");
-        // animator.ResetTrigger("Hit");
-        // animator.SetTrigger("Hit");
-        // Invoke(nameof(ResetHit), 2f);
+        isAttacking = value == 1;
+        if (isAttacking)
+            attackingTimeout = attackAnimDuration;
     }
 
-    void ResetHit() => isHit = false;
+    public void SetHit(int value)
+    {
+        isHit = value == 1;
+        if (isHit)
+            hittingTimeout = hitAnimDuration;
+    }
+
+    void TickTimeouts()
+    {
+        if (isAttacking)
+        {
+            attackingTimeout -= Time.deltaTime;
+            if (attackingTimeout <= 0f)
+            {
+                isAttacking = false;
+                Debug.LogWarning("[EnemyAI] attackingTimeout estourou — flag resetada forçadamente");
+            }
+        }
+
+        if (isHit)
+        {
+            hittingTimeout -= Time.deltaTime;
+            if (hittingTimeout <= 0f)
+            {
+                isHit = false;
+                Debug.LogWarning("[EnemyAI] hittingTimeout estourou — flag resetada forçadamente");
+            }
+        }
+    }
+
+    // ─── Callbacks ────────────────────────────────────────────────────────────
 
     public void ApplyAttackDamage()
     {
         if (!isAttacking) return;
         if (Vector3.Distance(transform.position, player.position) <= attackRange + 0.5f)
             playerHealth?.TakeDamage(attackDamage);
+    }
+
+    public void OnHit()
+    {
+        isHit        = true;
+        isAttacking  = false;      // garante que ataque anterior é cancelado
+        attackingTimeout = 0f;     // cancela timeout pendente do ataque
+        hittingTimeout   = hitAnimDuration; // inicia timeout do hit
+        currentState = State.Idle;
+        agent.velocity  = Vector3.zero;
+        agent.isStopped = true;
+        agent.ResetPath();
+        animator.ResetTrigger("Attack");
+        animator.ResetTrigger("Hit");
+        animator.SetTrigger("Hit");
     }
 
     // ─── SFX ──────────────────────────────────────────────────────────────────
@@ -319,6 +358,15 @@ public class EnemyAI : MonoBehaviour
         {
             Gizmos.color = Color.magenta;
             Gizmos.DrawSphere(lastKnownPosition, 0.3f);
+        }
+    }
+
+    void LateUpdate()
+    {
+        if (isHit || isAttacking)
+        {
+            agent.isStopped = true;
+            agent.velocity  = Vector3.zero;
         }
     }
 }

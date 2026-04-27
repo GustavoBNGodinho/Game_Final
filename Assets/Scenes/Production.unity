@@ -268,7 +268,7 @@ MonoBehaviour:
   verticalMax: 60
   collisionLayers:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 65
   collisionOffset: 0.2
 --- !u!4 &104388370
 Transform:

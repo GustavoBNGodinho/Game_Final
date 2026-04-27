@@ -26,5 +26,4 @@ public class EnemyAttackEvent : MonoBehaviour
         // Debug.Log("OnAttackEnd foi chamada");
         ai.isAttacking = false;
     }
-
 }
