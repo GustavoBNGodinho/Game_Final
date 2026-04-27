@@ -16,11 +16,11 @@ public class EnemyAI : MonoBehaviour
 
     [Header("Detecção — Cone de Visão")]
     public float visionRange = 15f;
-    public float visionAngle = 90f;  // meio ângulo — 90 = cone de 180° total
-    public LayerMask obstacleMask;   // atribuir no Inspector: paredes, obstáculos
+    public float visionAngle = 90f;
+    public LayerMask obstacleMask;
 
     [Header("Detecção — Proximidade")]
-    public float proximityRange = 2.5f; // sente o player em volta sem precisar ver
+    public float proximityRange = 2.5f;
 
     [Header("Combate")]
     public float attackRange    = 1.8f;
@@ -28,33 +28,39 @@ public class EnemyAI : MonoBehaviour
     public float attackCooldown = 1.5f;
 
     [Header("Velocidade")]
-    public float patrolSpeed     = 2f;
-    public float chaseSpeed      = 5f;
+    public float patrolSpeed      = 2f;
+    public float chaseSpeed       = 5f;
     public float investigateSpeed = 3f;
 
-    [Header("Perseguição")]
-    public float pathUpdateInterval = 0.15f; // recalcula a cada 150ms
-    private float pathUpdateTimer = 0f;
-
     [Header("Investigação")]
-    public float investigateWaitTime = 4f; // tempo parado no último lugar visto
+    public float investigateWaitTime = 4f;
     private Vector3 lastKnownPosition;
     private float   investigateTimer;
 
     [Header("Referências")]
     public Transform player;
 
+    [Header("SFX")]
+    public AudioSource footstepSource;
+    public AudioSource patrolGrowl;
+    public AudioSource chaseGrowl;
+    public AudioSource swing;
+
+    [Header("SFX Timers")]
+    private float nextPatrolSoundTime = 0f;
+    private float nextChaseGrowlTime  = 0f;
+
+    [Header("Perseguição")]
+    public float pathUpdateInterval = 0.15f;
+    private float pathUpdateTimer   = 0f;
+
     private NavMeshAgent agent;
     private Animator     animator;
     private PlayerHealth playerHealth;
 
     private float attackTimer = 0f;
-    private bool  isAttacking = false;
+    public bool  isAttacking = false;
     private bool  isHit       = false;
-
-    // atualização de path — evita recalcular todo frame
-    private Vector3 lastPlayerPosition;
-    public  float   pathUpdateDistance = 0.5f;
 
     void Awake()
     {
@@ -78,9 +84,11 @@ public class EnemyAI : MonoBehaviour
         UpdateState(dist);
         ExecuteState(dist);
         UpdateAnimator();
+        HandleMovementSFX();
+        Debug.Log("isAttacking: " + isAttacking);
     }
 
-    // ─── Detecção ────────────────────────────────────────────────────────────
+    // ─── Detecção ─────────────────────────────────────────────────────────────
 
     bool CanSeePlayer()
     {
@@ -94,7 +102,6 @@ public class EnemyAI : MonoBehaviour
         Vector3 origin = transform.position + Vector3.up * 1f;
         Vector3 target = player.position    + Vector3.up * 1f;
 
-        // Raycast só contra obstáculos — se bater em algo, visão bloqueada
         if (Physics.Raycast(origin, (target - origin).normalized, dist, obstacleMask))
             return false;
 
@@ -103,7 +110,6 @@ public class EnemyAI : MonoBehaviour
 
     bool CanSensePlayer()
     {
-        // Proximidade em 360° — independe de ângulo ou linha de visão
         return Vector3.Distance(transform.position, player.position) <= proximityRange;
     }
 
@@ -124,7 +130,6 @@ public class EnemyAI : MonoBehaviour
         if (PlayerDetected())
         {
             lastKnownPosition = player.position;
-            // Reseta o timer ao entrar em Chase para atualizar o path imediatamente
             if (currentState != State.Chase)
                 pathUpdateTimer = 0f;
             currentState = State.Chase;
@@ -151,23 +156,37 @@ public class EnemyAI : MonoBehaviour
                 break;
 
             case State.Patrol:
-                if (isHit) break;
                 agent.isStopped = false;
                 agent.speed     = patrolSpeed;
                 patrolTimer    -= Time.deltaTime;
+
                 if (patrolTimer <= 0f || agent.remainingDistance < 0.5f)
                 {
                     patrolTarget = GetRandomPatrolPoint();
                     agent.SetDestination(patrolTarget);
                     patrolTimer  = patrolWaitTime;
                 }
+
+                if (Time.time >= nextPatrolSoundTime)
+                {
+                    patrolGrowl.PlayOneShot(patrolGrowl.clip);
+                    nextPatrolSoundTime = Time.time + Random.Range(4f, 10f);
+                }
                 break;
 
             case State.Chase:
                 if (isHit) break;
+                if (isAttacking) break;
+
+                if (Time.time >= nextChaseGrowlTime)
+                {
+                    chaseGrowl.PlayOneShot(chaseGrowl.clip);
+                    nextChaseGrowlTime = Time.time + Random.Range(3f, 5f);
+                }
+
                 animator.ResetTrigger("Attack");
-                agent.isStopped      = false;
-                agent.speed          = chaseSpeed;
+                agent.isStopped        = false;
+                agent.speed            = chaseSpeed;
                 agent.stoppingDistance = attackRange;
 
                 pathUpdateTimer -= Time.deltaTime;
@@ -180,15 +199,14 @@ public class EnemyAI : MonoBehaviour
 
             case State.Investigate:
                 if (isHit) break;
-                agent.isStopped      = false;
-                agent.speed          = investigateSpeed;
+                agent.isStopped        = false;
+                agent.speed            = investigateSpeed;
                 agent.stoppingDistance = 0.5f;
                 agent.SetDestination(lastKnownPosition);
 
-                // Chegou no último lugar visto — espera e volta a patrulhar
                 if (agent.remainingDistance < 0.6f)
                 {
-                    agent.isStopped  = true;
+                    agent.isStopped   = true;
                     investigateTimer -= Time.deltaTime;
                     if (investigateTimer <= 0f)
                         currentState = State.Patrol;
@@ -206,13 +224,16 @@ public class EnemyAI : MonoBehaviour
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation, Quaternion.LookRotation(dir), 10f * Time.deltaTime);
 
-                if (attackTimer <= 0f && !isAttacking)
+                // if (attackTimer <= 0f && !isAttacking)
+                if (attackTimer <= 0f)
                 {
-                    isAttacking  = true;
-                    attackTimer  = attackCooldown;
+                    // isAttacking = true;
+                    attackTimer = attackCooldown;
+                    // swing.PlayDelayed(0.6f); COMENTAR ESSA LINHA RESOLVE BUG QUE TRAVAVA O MAYNARD
+                    patrolGrowl.PlayDelayed(0.0f);
                     animator.ResetTrigger("Attack");
                     animator.SetTrigger("Attack");
-                    Invoke(nameof(ResetAttacking), attackCooldown);
+                    // Invoke(nameof(ResetAttacking), attackCooldown);
                 }
                 break;
         }
@@ -229,16 +250,16 @@ public class EnemyAI : MonoBehaviour
 
     public void OnHit()
     {
-        isHit       = true;
+        // isHit       = true;
         isAttacking = false;
         currentState = State.Idle;
         agent.isStopped = true;
         agent.ResetPath();
-        CancelInvoke(nameof(ResetAttacking));
-        animator.ResetTrigger("Attack");
-        animator.ResetTrigger("Hit");
-        animator.SetTrigger("Hit");
-        Invoke(nameof(ResetHit), 2f);
+        // CancelInvoke(nameof(ResetAttacking));
+        // animator.ResetTrigger("Attack");
+        // animator.ResetTrigger("Hit");
+        // animator.SetTrigger("Hit");
+        // Invoke(nameof(ResetHit), 2f);
     }
 
     void ResetHit() => isHit = false;
@@ -248,6 +269,25 @@ public class EnemyAI : MonoBehaviour
         if (!isAttacking) return;
         if (Vector3.Distance(transform.position, player.position) <= attackRange + 0.5f)
             playerHealth?.TakeDamage(attackDamage);
+    }
+
+    // ─── SFX ──────────────────────────────────────────────────────────────────
+
+    void HandleMovementSFX()
+    {
+        bool isMoving = agent.velocity.magnitude > 0.1f;
+
+        if (isMoving)
+        {
+            if (!footstepSource.isPlaying)
+                footstepSource.Play();
+            footstepSource.pitch = currentState == State.Chase ? 1.25f : 1.1f;
+        }
+        else
+        {
+            if (footstepSource.isPlaying)
+                footstepSource.Stop();
+        }
     }
 
     // ─── Utilitários ──────────────────────────────────────────────────────────
@@ -262,7 +302,6 @@ public class EnemyAI : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
-        // Cone de visão
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, visionRange);
         Vector3 left  = Quaternion.Euler(0, -visionAngle, 0) * transform.forward * visionRange;
@@ -270,15 +309,12 @@ public class EnemyAI : MonoBehaviour
         Gizmos.DrawLine(transform.position, transform.position + left);
         Gizmos.DrawLine(transform.position, transform.position + right);
 
-        // Proximidade
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, proximityRange);
 
-        // Alcance de ataque
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
 
-        // Último lugar visto
         if (currentState == State.Investigate)
         {
             Gizmos.color = Color.magenta;
