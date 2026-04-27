@@ -15,7 +15,6 @@ public class Menu : MonoBehaviour
     {
         if (!videoPlayer.isPlaying && Input.anyKeyDown)
         {
-            Debug.Log("oi");
             videoPlayer.Play();
             rawImage.SetActive(true);
             menuOpcoes.SetActive(true);
