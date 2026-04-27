@@ -56,11 +56,11 @@ ModelImporter:
       curves: []
       events:
       - time: 0
-        functionName: OnAttackStart
+        functionName: SetAttacking
         data: 
-        objectReferenceParameter: {fileID: 11500000, guid: 580de7ae9b19237489df85bcc4985cb6, type: 3}
+        objectReferenceParameter: {fileID: 11500000, guid: c7f133a725d035b4286cf18148dca798, type: 3}
         floatParameter: 0
-        intParameter: 0
+        intParameter: 1
         messageOptions: 0
       - time: 0.3878292
         functionName: OnAttackHit
@@ -69,10 +69,10 @@ ModelImporter:
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.91544116
-        functionName: OnAttackEnd
+      - time: 1
+        functionName: SetAttacking
         data: 
-        objectReferenceParameter: {fileID: 11500000, guid: 580de7ae9b19237489df85bcc4985cb6, type: 3}
+        objectReferenceParameter: {fileID: 11500000, guid: c7f133a725d035b4286cf18148dca798, type: 3}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
