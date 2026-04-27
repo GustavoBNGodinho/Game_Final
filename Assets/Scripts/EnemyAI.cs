@@ -230,7 +230,7 @@ public class EnemyAI : MonoBehaviour
                     // isAttacking = true;
                     attackTimer = attackCooldown;
                     // swing.PlayDelayed(0.6f); COMENTAR ESSA LINHA RESOLVE BUG QUE TRAVAVA O MAYNARD
-                    patrolGrowl.PlayDelayed(0.0f);
+                    // patrolGrowl.PlayDelayed(0.0f);
                     animator.ResetTrigger("Attack");
                     animator.SetTrigger("Attack");
                     // Invoke(nameof(ResetAttacking), attackCooldown);
