@@ -184,7 +184,7 @@ public class PlayerController : MonoBehaviour
             EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
             if (enemy != null)
             {
-                enemy.TakeDamage(25f);
+                enemy.TakeDamage(5f);
                 Debug.Log("[Player] Acertou o inimigo!");
             }
         }
@@ -228,7 +228,7 @@ public class PlayerController : MonoBehaviour
         {
             pontoFinal = hit.point;
             EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-            if (enemy != null) enemy.TakeDamage(25f);
+            if (enemy != null) enemy.TakeDamage(15f);
         }
         else
         {

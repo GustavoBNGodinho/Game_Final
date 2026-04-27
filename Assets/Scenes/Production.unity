@@ -1653,6 +1653,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Maynard
       objectReference: {fileID: 0}
+    - target: {fileID: 3357941602118147372, guid: 84e5fbb77de645946804d9b224af508e, type: 3}
+      propertyPath: m_Speed
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3357941602118147372, guid: 84e5fbb77de645946804d9b224af508e, type: 3}
+      propertyPath: m_Acceleration
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3357941602118147372, guid: 84e5fbb77de645946804d9b224af508e, type: 3}
+      propertyPath: m_AngularSpeed
+      value: 240
+      objectReference: {fileID: 0}
+    - target: {fileID: 3357941602118147372, guid: 84e5fbb77de645946804d9b224af508e, type: 3}
+      propertyPath: m_StoppingDistance
+      value: 1.5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2556,6 +2572,10 @@ PrefabInstance:
       propertyPath: tmpLife
       value: 
       objectReference: {fileID: 1859398577}
+    - target: {fileID: 9081350632028149887, guid: 14bf27902d7562d4ebbed6a933963360, type: 3}
+      propertyPath: runSpeed
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 9081350632028149887, guid: 14bf27902d7562d4ebbed6a933963360, type: 3}
       propertyPath: tiroLinha
       value: 
