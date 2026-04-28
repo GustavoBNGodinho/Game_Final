@@ -27,7 +27,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Configuração de Tiro")]
     public TextMeshProUGUI tmpBullet;
-    private float quantBullet = 12;
+    private float quantBullet = 20;
 
     [Header("Efeito Visual")]
     public LineRenderer tiroLinha;
@@ -218,9 +218,18 @@ public class PlayerController : MonoBehaviour
             {
                 enemy.TakeDamage(5f);
                 Debug.Log("[Player] Acertou o inimigo!");
+                return;
+            }
+
+            MiniBossHealth boss = hit.collider.GetComponent<MiniBossHealth>();
+            if (boss != null)
+            {
+                boss.TakeDamage(5f);
+                Debug.Log("[Player] Acertou o miniboss!");
             }
         }
     }
+
     void ReduceBullet()
     {
         quantBullet = Mathf.Clamp(quantBullet - 1, 0, 99);
@@ -262,8 +271,17 @@ public class PlayerController : MonoBehaviour
         if (Physics.SphereCast(transform.position + Vector3.up, 2f, transform.forward, out hit, 50f))
         {
             pontoFinal = hit.point;
+
             EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
-            if (enemy != null) enemy.TakeDamage(15f);
+            if (enemy != null)
+            {
+                enemy.TakeDamage(15f);
+            }
+            else
+            {
+                MiniBossHealth boss = hit.collider.GetComponent<MiniBossHealth>();
+                if (boss != null) boss.TakeDamage(15f);
+            }
         }
         else
         {
