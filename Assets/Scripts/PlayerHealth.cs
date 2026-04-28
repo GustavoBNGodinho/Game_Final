@@ -10,6 +10,7 @@ public class PlayerHealth : MonoBehaviour
     private bool isDead = false;
     public float maxHealth = 100f;
     private float currentHealth = 80;
+    public GameOverManager gameOver;
 
     public Slider healthBar; // opcional — arraste uma UI Slider
 
@@ -51,5 +52,6 @@ public class PlayerHealth : MonoBehaviour
         isDead = true;
         Debug.Log("[Player] Game Over.");
         GetComponent<PlayerController>().OnDeath();
+        gameOver.AtivarTelaGameOver();
     }
 }
