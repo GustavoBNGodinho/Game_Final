@@ -6,10 +6,12 @@ public class BoxLifeControler : MonoBehaviour
     public float value = 10;
     public GameObject txtGetLife;
     private Transform player;
+    private GameObject goatHeal;
     
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
+        goatHeal = GameObject.FindGameObjectWithTag("buchada");
     }
 
     // Update is called once per frame
@@ -21,6 +23,7 @@ public class BoxLifeControler : MonoBehaviour
             if (Input.GetKey(KeyCode.E))
             {
                 player.GetComponent<PlayerHealth>().AddLife(value);
+                goatHeal.GetComponent<GoatHealth>().Heal(value);
                 txtGetLife.SetActive(false);
                 Destroy(gameObject);
             }
